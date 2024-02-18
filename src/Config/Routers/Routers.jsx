@@ -6,7 +6,7 @@ import Login from "../../Screens/Login";
 import Register from "../../Screens/Register";
 import Home from "../../Screens/Home";
 import ProtectedRoute from "./ProtectedRoute";
-import Student from "../../Screens/student";
+import Student from "../../Screens/Student";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { auth, db } from "../Firebase/Firebase";
 import Error from "../../Components/Layouts/Error";
