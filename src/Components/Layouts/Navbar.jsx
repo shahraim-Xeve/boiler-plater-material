@@ -12,12 +12,13 @@ import Button from "@mui/material/Button";
 import Tooltip from "@mui/material/Tooltip";
 import MenuItem from "@mui/material/MenuItem";
 import AdbIcon from "@mui/icons-material/Adb";
-import { signOutUser } from "../../Config/Firebase/Firebase";
+import { getData, signOutUser, storage } from "../../Config/Firebase/Firebase";
 import { useNavigate } from "react-router-dom";
-
+import SideBar from "./SideBar";
 const settings = ["Profile", "Account", "Dashboard"];
 
 function Navbar({ userIN, setUserIN, checkType }) {
+  const [userData, setUserData] = React.useState(null);
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
   const navigate = useNavigate();
@@ -33,6 +34,18 @@ function Navbar({ userIN, setUserIN, checkType }) {
   const handleOpenUserMenu = (event) => {
     setAnchorElUser(event.currentTarget);
   };
+
+  React.useEffect(() => {
+    if (userIN) {
+      getData("users")
+        .then((res) => {
+          console.log(res);
+          setUserData(res[0]);
+          console.log(userData?.studentData?.name);
+        })
+        .catch((err) => console.log(err));
+    }
+  }, [userIN]);
 
   const handleCloseNavMenu = (page) => {
     setAnchorElNav(null);
@@ -52,6 +65,7 @@ function Navbar({ userIN, setUserIN, checkType }) {
       .then(() => {
         setUserIN(null);
         navigate("/login");
+        setUserData(null);
       })
       .catch((error) => {
         console.log("Error logging out:", error);
@@ -152,12 +166,41 @@ function Navbar({ userIN, setUserIN, checkType }) {
             ))}
           </Box>
 
-          <Box sx={{ flexGrow: 0 }}>
-            <Tooltip title="Open settings">
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
-              </IconButton>
-            </Tooltip>
+          <Box
+            sx={{
+              display: "flex",
+              flexGrow: 0,
+              justifyContent: "center",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            {userIN && checkType === "admin" && (
+              <MenuItem onClick={handleLogout}>Logout</MenuItem>
+            )}
+            {userData && userData.studentData && userData.studentData.name && (
+              <Typography>{userData.studentData.name}</Typography>
+            )}
+            {checkType === "student" && (
+              <>
+                {userData &&
+                userData.studentData &&
+                userData.studentData.fileURL ? (
+                  <Tooltip title="Open settings">
+                    <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                      <Avatar
+                        alt="Profile Image"
+                        src={userData?.studentData?.fileURL}
+                      />
+                    </IconButton>
+                  </Tooltip>
+                ) : (
+                  <Avatar alt="Default Avatar" />
+                )}{" "}
+              </>
+            )}
+            {userIN && <SideBar checkType={checkType} />}
+
             <Menu
               sx={{ mt: "45px" }}
               id="menu-appbar"

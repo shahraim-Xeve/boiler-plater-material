@@ -33,26 +33,30 @@ const Routers = () => {
 
   return (
     <BrowserRouter>
-      <Navbar userIN={userIN} setUserIN={setUserIN} checkType={checkType} />
-      <Routes>
-        {checkType === "admin" ? (
-          <Route
-            path="/admin"
-            element={<ProtectedRoute component={<Home />} />}
-          />
-        ) : checkType === "student" ? (
-          <Route
-            path="/student"
-            element={<ProtectedRoute component={<Student />} />}
-          />
-        ) : (
-          "loading"
-        )}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="*" element={<ProtectedRoute component={<Error />} />} />
-      </Routes>
-      <Footer />
+      <div
+        style={{ position: "relative", minHeight: "100vh", marginBottom: 30 }}
+      >
+        <Navbar userIN={userIN} setUserIN={setUserIN} checkType={checkType} />
+        <Routes>
+          {checkType === "admin" ? (
+            <Route
+              path="admin/*"
+              element={<ProtectedRoute component={<Home />} />}
+            />
+          ) : checkType === "student" ? (
+            <Route
+              path="student"
+              element={<ProtectedRoute component={<Student />} />}
+            />
+          ) : (
+            "loading"
+          )}
+          <Route path="login" element={<Login />} />
+          <Route path="register" element={<Register />} />
+          <Route path="*" element={<ProtectedRoute component={<Error />} />} />
+        </Routes>
+        <Footer />
+      </div>
     </BrowserRouter>
   );
 };

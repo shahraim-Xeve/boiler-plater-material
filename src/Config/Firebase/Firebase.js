@@ -16,7 +16,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
-
+import { getStorage } from "firebase/storage";
 const firebaseConfig = {
   apiKey: "AIzaSyC5Rxj4n-m9wZ5KNmkNKQmdFhGtCKeIVd8",
   authDomain: "mini-hackathon-80115.firebaseapp.com",
@@ -30,6 +30,7 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
+export const storage = getStorage(app);
 const auth = getAuth(app);
 
 //initialize firestore database
@@ -112,17 +113,19 @@ const sendData = (obj, colName) => {
 //get data with id from firestore
 const getData = (colName) => {
   return new Promise(async (resolve, reject) => {
-    const dataArr = [];
-    const q = query(
-      collection(db, colName),
-      where("id", "==", auth.currentUser.uid)
-    );
-    const querySnapshot = await getDocs(q);
-    querySnapshot.forEach((doc) => {
-      dataArr.push(doc.data());
-      resolve(dataArr);
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        const dataArr = [];
+        const q = query(collection(db, colName), where("id", "==", user.uid));
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+          dataArr.push(doc.data());
+        });
+        resolve(dataArr);
+      } else {
+        reject("User is not signed in");
+      }
     });
-    reject("error occured");
   });
 };
 
@@ -158,6 +161,46 @@ const updateDocument = async (obj, id, name) => {
     reject("error occured");
   });
 };
+const checkCombinationExists = (teacher, course, days, colName) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const querySnapshot = await getDocs(
+        query(collection(db, colName), where("course", "==", course))
+      );
+
+      if (!querySnapshot.empty) {
+        let courseExists = false;
+        querySnapshot.forEach((doc) => {
+          const courseData = doc.data();
+          if (
+            courseData.teachers &&
+            courseData.teachers.some((t) => t.name === teacher)
+          ) {
+            courseExists = true;
+          } else {
+            const teachersArray = courseData.teachers
+              ? [...courseData.teachers]
+              : [];
+            teachersArray.push({
+              name: teacher,
+              days: days,
+            });
+            updateDoc(doc.ref, { teachers: teachersArray });
+          }
+        });
+        resolve(courseExists);
+      } else {
+        await addDoc(collection(db, colName), {
+          course: course,
+          teachers: [{ name: teacher, days: days }],
+        });
+        resolve(false);
+      }
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
 
 export {
   auth,
@@ -170,4 +213,5 @@ export {
   getAllData,
   deleteDocument,
   updateDocument,
+  checkCombinationExists,
 };
